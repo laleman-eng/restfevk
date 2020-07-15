@@ -45,6 +45,7 @@ namespace ApirestFEVK
             string result = "ok";
             try
             {
+                string defult; 
                 var rs = JsonConvert.DeserializeObject<ObjetosSAP>(body);
 
                 //Id Doc 
@@ -58,16 +59,22 @@ namespace ApirestFEVK
                 idDoc.TpoImpresion = "N";
                 idDoc.IndServicio = 0;
                 idDoc.MntBruto = 0;
-                idDoc.TpoTranCompra = 0;  //*forma parte de la estructura del addon que actualmente no tengo crear pestaña addon
-                idDoc.TpoTranVenta = 0;   //*forma parte de la estructura del addon que actualmente no tengo crear pestaña addon
+                     defult = retornarResult(rs, "OINV", "U_TpoTranCpra");
+                idDoc.TpoTranCompra = (defult == "" ? 0 : int.Parse(defult));
+                    defult = retornarResult(rs, "OINV", "U_TpoTranVta");
+                idDoc.TpoTranVenta = (defult == "" ? 0 : int.Parse(defult));
                 idDoc.FmaPago = 0;  //*int.Parse(retornarResult(rs, "OCTG", "U_FmaPago"));  traerme la tabla 
                 idDoc.FmaPagExp = 0; //para documentos de exportacion
                 idDoc.FchCancel = ""; // para exportacion
                 idDoc.MntCancel = 0; //para exportacion  
                 idDoc.SaldoInsol = 0; // campo opcional con valor 0 en SP Y VW
-                    idDoc.MntPagos[0].FchPago = retornarResult(rs, "OINV", "DocDueDate");
-                    idDoc.MntPagos[0].MntPago = retornarResult(rs, "OINV", "DocTotal");
-                    idDoc.MntPagos[0].GlosaPagos = retornarResult(rs, "OCTG", "PymntGroup"); //* traerme tabla
+                 
+                 MntPagos mntPagos = new MntPagos();
+                 mntPagos.FchPago = retornarResult(rs, "OINV", "DocDueDate");
+                 mntPagos.MntPago = retornarResult(rs, "OINV", "DocTotal");
+                 mntPagos.GlosaPagos = retornarResult(rs, "OCTG", "PymntGroup");
+                
+
                 idDoc.MedioPago = ""; //campo opcional 
                 idDoc.TpoCtaPago = "";  //campo en DTE lleva nombre: TipoCtaPago preguntar Daniel
                 idDoc.NumCtaPago = "";  //opcional
@@ -76,7 +83,21 @@ namespace ApirestFEVK
                 idDoc.TermPagoDias = 0; //opcional
                 idDoc.FchVenc = retornarResult(rs, "OINV", "DocDueDate");
 
-                //
+                // Emisor 
+                Emisor emisor = new Emisor();
+                emisor.RUTEmisor = rs.OADMS.OADM.TaxIdNum;
+                emisor.RznSoc = rs.OADMS.OADM.CompnyName;
+                emisor.GiroEmis = rs.ADM1S.ADM1.GlblLocNum;
+                emisor.Telefono = rs.OADMS.OADM.Phone1;
+                emisor.CorreoEmisor = "";  //revisar mas adelante
+                // emisor.Acteco = "";  lo saca daniel de la configuracion del portal
+                //emisor.GuiaExport  solo para guai de exportacion
+                emisor.Sucursal = "central";  //asignar mapeo, esta como constante
+                emisor.CdgSIISucur = retornarResult(rs, "OINV", "U_CdgSiiSuc");
+                /*emisor.DirOrigen  no hay mapeo en los sp revisar mas adelante
+                emisor.CmnaOrigen 
+                emisor.CiudadOrigen */
+                //emisor.CdgVendedor = retornarResult(rs, "OSLP", "SlpName");
 
             }
             catch (Exception ex)
@@ -107,6 +128,9 @@ namespace ApirestFEVK
                     case "OCRD":
                         list = objetosSAP.OCRD.dbDataSources.rows.row.cells.cell;
                         break;
+                    case "OCTG":
+                        list = objetosSAP.OCTG.dbDataSources.rows.row.cells.cell;
+                        break;
                     default:
                         return "Objeto no encontrado";
                 }
@@ -117,7 +141,8 @@ namespace ApirestFEVK
                         return list[i].value;
                 }
 
-                return ("Campo: " + campo + " no encontrado en objeto: "+ objeto);
+                return "";
+                //return ("Campo: " + campo + " no encontrado en objeto: "+ objeto);
             }
             catch (Exception ex)
             {

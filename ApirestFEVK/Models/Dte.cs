@@ -64,7 +64,7 @@ namespace ApirestFEVK.Models
         public int Acteco { get; set; }
         public GuiaExport GuiaExport { get; set; }
         public string Sucursal { get; set; }
-        public int CdgSIISucur { get; set; }
+        public String CdgSIISucur { get; set; }
         public string DirOrigen { get; set; }
         public string CmnaOrigen { get; set; }
         public string CiudadOrigen { get; set; }
